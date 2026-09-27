@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#151A24">
+<title>NFL predictor</title>
+<style>
+  :root{--bg:#151A24;--panel:#1D2431;--panel2:#26303F;--line:#36425A;--ink:#EEF1F6;--mute:#97A3B8;--home:#E8C46A;--away:#7FB7E6;--ok:#7DC862;--warn:#F0B646;--bad:#E0625E}
+  *{box-sizing:border-box}html,body{margin:0}
+  body{background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;max-width:640px;margin:0 auto;padding:18px 14px 70px;-webkit-text-size-adjust:100%}
+  h1{font-size:24px;margin:0 0 2px}.sub{color:var(--mute);font-size:13px;margin:0 0 14px}
+  nav{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin:0 0 14px}
+  nav button{background:var(--panel);border:1px solid var(--line);color:var(--mute);border-radius:8px;padding:9px 4px;font:inherit;font-size:13px}
+  nav button[aria-pressed="true"]{background:var(--panel2);color:var(--ink);border-color:var(--home)}
+  .view{display:none}.view.on{display:block}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:10px}.card h2{font-size:14px;margin:0 0 10px;color:var(--mute);font-weight:600}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}.row3{display:grid;grid-template-columns:auto 1fr auto;gap:8px;margin-bottom:8px}
+  select,button.p,button.q,input{font:inherit}select,input{background:var(--panel2);color:var(--ink);border:1px solid var(--line);border-radius:7px;padding:9px;width:100%}
+  button.p{font-weight:600;background:var(--home);color:#1a1606;border:0;border-radius:8px;padding:11px;width:100%}button.q{background:transparent;color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:8px;width:100%;font-size:13px}button:disabled{opacity:.45}
+  #log{font:12px/1.55 ui-monospace,Menlo,monospace;color:var(--mute);white-space:pre-wrap;margin-top:8px}.bad{color:var(--bad)}.ok{color:var(--ok)}
+  table.sum{width:100%;border-collapse:collapse;font-size:13px}table.sum td,table.sum th{padding:6px 4px;border-bottom:1px solid var(--line);vertical-align:top;text-align:left}table.sum td.n{font:600 12.5px ui-monospace,Menlo,monospace;text-align:right;white-space:nowrap}table.sum th{color:var(--mute);font-weight:600;font-size:11px;text-transform:uppercase}
+  .g{background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:12px;margin-bottom:9px}
+  .g .t{font-weight:600;font-size:16px;line-height:1.25}.g .t .a{color:var(--away)}.g .t .h{color:var(--home)}.g .meta{color:var(--mute);font-size:12px;margin:3px 0 10px}
+  .bar{height:9px;border-radius:5px;background:var(--away);overflow:hidden;margin:0 0 5px}.bar i{display:block;height:100%;background:var(--home);float:right}
+  .pcts{display:flex;justify-content:space-between;font:600 15px/1 ui-monospace,Menlo,monospace;margin-bottom:10px}
+  .verdict{font-size:14px;padding:8px 10px;border-radius:6px;border:1px solid var(--line);margin-bottom:8px}.verdict b{font-size:15px}
+  .mk{display:grid;grid-template-columns:auto 1fr;gap:4px 10px;font-size:13px;padding:8px 10px;border-radius:6px;border:1px solid var(--line);margin-bottom:8px}.mk .k{color:var(--mute)}.mk .on{color:var(--ok);font-weight:600}.mk .some{color:var(--ink)}.mk small{color:var(--mute);font-size:11.5px}
+  .warnbox{font-size:12.5px;color:var(--warn);border:1px solid rgba(240,182,70,.4);border-radius:6px;padding:6px 8px;margin-bottom:8px}
+  details{border-top:1px solid var(--line);padding-top:8px}summary{cursor:pointer;color:var(--mute);font-size:13px}
+  dl.f{margin:8px 0 0;display:grid;grid-template-columns:auto 1fr 1fr;gap:4px 10px;font-size:12.5px}dl.f dt{color:var(--mute)}dl.f dd{margin:0;font-family:ui-monospace,Menlo,monospace}
+  dl.f .hd{color:var(--mute);font-size:11px;text-transform:uppercase;letter-spacing:.04em}
+  dl.s{margin:0}dl.s div{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--line)}dl.s dt{color:var(--mute);font-size:13px}dl.s dd{margin:0;font:600 16px/1 ui-monospace,Menlo,monospace}
+  .empty{color:var(--mute);font-size:13px}
+  .qb{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:0 0 8px}.qb select{padding:6px;font-size:12.5px}.qb small{display:block;color:var(--mute);font-size:11px;margin-bottom:2px}
+  table.books{width:100%;border-collapse:collapse;font:12px ui-monospace,Menlo,monospace;margin-top:6px}table.books td,table.books th{padding:4px 3px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}table.books td:first-child,table.books th:first-child{text-align:left;font-family:system-ui,sans-serif}table.books th{color:var(--mute);font-weight:600;font-size:10.5px}table.books td.best{color:var(--ok);font-weight:700}
+</style>
+</head>
+<body>
+<h1>NFL predictor</h1>
+<p class="sub">Trained on <span id="mUsed"></span> games (<span id="mSeasons"></span>), ratings as of <span id="mAsOf"></span>. Holdout: <span id="mAcc"></span> moneyline, spread error <span id="mMae"></span>, total error <span id="mTae"></span>.</p>
+<nav><button data-v="games" aria-pressed="true">Games</button><button data-v="score" aria-pressed="false">Scorecard</button></nav>
+
+<section class="view on" id="v-games">
+  <div class="card">
+    <div class="row3"><button class="q" id="prevW">&larr;</button><select id="week"><option value="">Current week</option></select><button class="q" id="nextW">&rarr;</button></div>
+    <button class="p" id="go">Load games &amp; odds</button>
+    <div id="log"></div>
+  </div>
+  <div id="summary"></div>
+  <div id="cards"></div>
+</section>
+
+<section class="view" id="v-score">
+  <div class="card"><h2>Model scorecard (every game you loaded)</h2><button class="q" id="settleAll" style="margin-bottom:10px">Update results from ESPN</button><dl class="s" id="score"><div><dt>Nothing settled yet</dt><dd>&mdash;</dd></div></dl></div>
+  <div class="card"><h2>How a prediction is made</h2><p class="sub" style="margin:0">Each team carries an Elo rating, smoothed EPA per play for pass and rush offence and defence (from play-by-play), success rates, points for and against, last-5 form and a rating for its starting quarterback (offensive EPA under him, adjusted for the defences he faced). Rest days, short weeks, division games, playoffs, neutral sites, dome, temperature, wind and surface are added, plus the injury report (each Out/Doubtful/Questionable player weighted by position and by his actual snap share from the latest snap-count data, falling back to his depth-chart rank, offence and defence separately, trained on every report since 2015), travel distance, time-zone shift and early body-clock kickoffs, altitude, and a new-head-coach flag. Weather comes from the Open-Meteo forecast for the stadium at kickoff. Three models are fitted on every game since 2015: a logistic model for the winner, a regression for the margin (spread) and a regression for total points. Each is then blended with the consensus bookmaker line using weights fitted on past seasons, and the residual spread of past errors gives cover and over probabilities at every book's line. Edges are shown per book; 4%+ is meaningful, under 2% is noise. Every game you load is recorded so the Scorecard can show how the model actually does against the closing lines.</p></div>
+</section>
+
+<script>
+/* load the published model, with a changing query so the phone never serves yesterday's copy from its cache */
+(function(){ var u="__MODEL_URL__"; if(!u) return; var v=new Date(); var tag=v.getUTCFullYear()+""+(v.getUTCMonth()+1)+""+v.getUTCDate()+""+v.getUTCHours();
+  document.write('<script src="'+u+(u.indexOf("?")<0?"?":"&")+"v="+tag+'" onerror="window.__modelFailed=1"><\/script>'); })();
+</script>
+<script>
+var BAKED = __MODEL_JSON__;
+var M = BAKED;
+(function(){                                   // prefer the published model when it is newer than this build
+  try{
+    var R = window.MODEL_REMOTE;
+    if(R && R.as_of && (!BAKED.as_of || R.as_of >= BAKED.as_of) && R.win_model){ M = R; M.__remote = true; }
+  }catch(e){}
+})();
+/* defaults so the app still runs on a model.json built by an older trainer (those features then count as zero) */
+M.stadiums=M.stadiums||{"ARI":[33.5276,-112.2626,-7,330],"ATL":[33.7554,-84.4009,-5,300],"BAL":[39.278,-76.6227,-5,10],"BUF":[42.7738,-78.787,-5,180],"CAR":[35.2258,-80.8528,-5,220],"CHI":[41.8623,-87.6167,-6,180],"CIN":[39.0955,-84.5161,-5,150],"CLE":[41.5061,-81.6995,-5,180],"DAL":[32.7473,-97.0945,-6,170],"DEN":[39.7439,-105.0201,-7,1610],"DET":[42.34,-83.0456,-5,180],"GB":[44.5013,-88.0622,-6,210],"HOU":[29.6847,-95.4107,-6,15],"IND":[39.7601,-86.1639,-5,220],"JAX":[30.324,-81.6373,-5,5],"KC":[39.0489,-94.4839,-6,270],"LA":[33.9535,-118.339,-8,30],"LAC":[33.9535,-118.339,-8,30],"LV":[36.0909,-115.1833,-8,620],"MIA":[25.958,-80.2389,-5,3],"MIN":[44.9736,-93.2575,-6,250],"NE":[42.0909,-71.2643,-5,90],"NO":[29.9511,-90.0812,-6,3],"NYG":[40.8135,-74.0745,-5,3],"NYJ":[40.8135,-74.0745,-5,3],"PHI":[39.9008,-75.1675,-5,10],"PIT":[40.4468,-80.0158,-5,230],"SEA":[47.5952,-122.3316,-8,5],"SF":[37.403,-121.97,-8,5],"TB":[27.9759,-82.5033,-5,10],"TEN":[36.1665,-86.7713,-6,130],"WAS":[38.9076,-76.8645,-5,50]};
+M.pos_w=M.pos_w||{"QB":0,"T":1,"OT":1,"G":0.9,"OG":0.9,"C":0.9,"OL":0.9,"WR":1,"TE":0.6,"RB":0.6,"FB":0.2,"HB":0.6,"DE":1,"DT":0.8,"NT":0.7,"DL":0.9,"EDGE":1,"OLB":0.9,"ILB":0.7,"MLB":0.7,"LB":0.7,"CB":1,"S":0.7,"SS":0.7,"FS":0.7,"DB":0.7,"K":0.3,"P":0.2,"LS":0.2};
+M.usage=M.usage||{}; M.depth=M.depth||{}; M.off_pos=M.off_pos||["C","FB","G","HB","OG","OL","OT","QB","RB","T","TE","WR"]; M.status_w=M.status_w||{"out":1,"doubtful":0.85,"questionable":0.35,"injured reserve":1,"ir":1,"pup":1,"suspended":1};
+var OLD_MODEL=M.win_model.w.length<27;
+var mem={}, LS=(function(){ try{ return window.localStorage; }catch(e){ return null; } })();
+function put(k,v){ try{ LS.setItem(k,JSON.stringify(v)); }catch(e){ mem[k]=v; } } function get(k){ try{ var v=LS.getItem(k); return v?JSON.parse(v):null; }catch(e){ return mem[k]||null; } }
+function keys(p){ var o=[]; try{ for(var i=0;i<LS.length;i++){ var k=LS.key(i); if(k.indexOf(p)===0) o.push(k);} }catch(e){ o=Object.keys(mem).filter(function(k){return k.indexOf(p)===0;}); } return o; }
+var $=function(id){ return document.getElementById(id); };
+$("mUsed").textContent=M.games_used.toLocaleString(); $("mSeasons").textContent=M.seasons[0]+"-"+M.seasons[M.seasons.length-1]; $("mAsOf").textContent=M.as_of; $("mAcc").textContent=(M.holdout.accuracy*100).toFixed(1)+"%"; $("mMae").textContent="\u00b1"+M.holdout.margin_mae.toFixed(1); $("mTae").textContent="\u00b1"+M.holdout.total_mae.toFixed(1);
+var navBtns=document.querySelectorAll("nav button"); navBtns.forEach(function(b){ b.onclick=function(){ navBtns.forEach(function(x){ x.setAttribute("aria-pressed",x===b); }); document.querySelectorAll(".view").forEach(function(v){ v.classList.toggle("on",v.id==="v-"+b.dataset.v); }); if(b.dataset.v==="score") renderScore(); }; });
+for(var w=1;w<=18;w++){ var o=document.createElement("option"); o.value=String(w); o.textContent="Week "+w; $("week").appendChild(o); }
+["Wild card","Divisional","Conference","Super Bowl"].forEach(function(n,i){ var o=document.createElement("option"); o.value="P"+(i+1); o.textContent=n; $("week").appendChild(o); });
+$("prevW").onclick=function(){ var s=$("week"); if(s.selectedIndex>1) s.selectedIndex--; load(); }; $("nextW").onclick=function(){ var s=$("week"); if(s.selectedIndex<s.options.length-1) s.selectedIndex++; load(); };
+
+/* ---------------- maps ---------------- */
+var ESPN2M={LAR:"LA",WSH:"WAS",JAC:"JAX",OAK:"LV",SD:"LAC",STL:"LA"};
+var DIV={ARI:"NFCW",SF:"NFCW",SEA:"NFCW",LA:"NFCW",DAL:"NFCE",NYG:"NFCE",PHI:"NFCE",WAS:"NFCE",CHI:"NFCN",DET:"NFCN",GB:"NFCN",MIN:"NFCN",ATL:"NFCS",CAR:"NFCS",NO:"NFCS",TB:"NFCS",
+         BUF:"AFCE",MIA:"AFCE",NE:"AFCE",NYJ:"AFCE",BAL:"AFCN",CIN:"AFCN",CLE:"AFCN",PIT:"AFCN",HOU:"AFCS",IND:"AFCS",JAX:"AFCS",TEN:"AFCS",DEN:"AFCW",KC:"AFCW",LV:"AFCW",LAC:"AFCW"};
+function tid(abbr){ abbr=String(abbr||"").toUpperCase(); return ESPN2M[abbr]||abbr; }
+
+/* ---------------- math ---------------- */
+function sigmoid(x){ return 1/(1+Math.exp(-x)); } function logitF(p){ p=Math.min(Math.max(p,1e-4),1-1e-4); return Math.log(p/(1-p)); }
+function erf(x){ var s=x<0?-1:1; x=Math.abs(x); var t=1/(1+0.3275911*x); var y=1-(((((1.061405429*t-1.453152027)*t)+1.421413741)*t-0.284496736)*t+0.254829592)*t*Math.exp(-x*x); return s*y; }
+function Phi(z){ return 0.5*(1+erf(z/Math.SQRT2)); }
+function pAbove(mu,sd,line){ /* P(X>line) for a roughly-integer score margin/total with a push at integer lines */ var isInt=Math.abs(line-Math.round(line))<1e-9; var over=1-Phi((line+(isInt?0.5:0)-mu)/sd), under=Phi((line-(isInt?0.5:0)-mu)/sd); var push=isInt?Math.max(0,1-over-under):0; return {p:over/(1-push),push:push}; }
+function lin(m,x){ var s=m.b; for(var i=0;i<m.w.length;i++) if(m.sd[i]>0) s+=(x[i]-m.mu[i])/m.sd[i]*m.w[i]; return s; }
+function mean(a){ return a.length?a.reduce(function(s,x){return s+x;},0)/a.length:0; } function median(a){ if(!a.length) return null; var b=a.slice().sort(function(x,y){return x-y;}); var n=b.length; return n%2?b[(n-1)/2]:(b[n/2-1]+b[n/2])/2; }
+function amToDec(v){ if(v==null) return null; var s=String(v).trim().toUpperCase().replace("EVEN","+100").replace("PK","0"); var a=parseFloat(s); if(!isFinite(a)||a===0) return null; return 1+(a>0?a/100:100/-a); }
+function decAm(d){ if(d==null) return "\u2014"; return d>=2?"+"+Math.round((d-1)*100):String(Math.round(-100/(d-1))); }
+function num(v){ var x=parseFloat(String(v==null?"":v).replace(/^[ou]/i,"")); return isFinite(x)?x:null; }
+function pct(x){ return (x*100).toFixed(1)+"%"; } function sgn(x){ return (x>0?"+":"")+x; }
+
+/* ---------------- model ---------------- */
+function team(t){ return M.teams[t]; }
+function qbRating(id){ var q=id&&M.qbs[id]; return q?q.rating:0; }
+function haversine(a,b){ var r=Math.PI/180, la1=a[0]*r, la2=b[0]*r, dl=(b[1]-a[1])*r; var h=Math.sin((la2-la1)/2)*Math.sin((la2-la1)/2)+Math.cos(la1)*Math.cos(la2)*Math.sin(dl/2)*Math.sin(dl/2); return 6371*2*Math.asin(Math.sqrt(h)); }
+function usageOf(team,name,isOff){ var u=(M.usage[team]||{})[name]; if(u) return (isOff?u[0]:u[1])/100; var d=(M.depth[team]||{})[name]; if(d) return ({1:0.85,2:0.35,3:0.12})[d[1]]||0.05; return 0.55; }
+function injScore(rows,team){ var off=0,def=0; (rows||[]).forEach(function(x){ var pos=String(x.pos||"").toUpperCase(); var base=(M.pos_w[pos]!=null?M.pos_w[pos]:0.5)*(M.status_w[String(x.status||"").toLowerCase()]||0); if(!base) return;
+  var isOff=M.off_pos.indexOf(pos)>=0; var use=Math.min(usageOf(team,x.name,isOff),1); x.use=use; x.w=base*use; if(isOff) off+=x.w; else def+=x.w; }); return [off,def]; }
+function situation(g){ var sh=M.stadiums[g.home], sa=M.stadiums[g.away]; var venue=g.neutral?null:sh; var o={travel:0,tz:0,body:0,alt:0};
+  if(venue&&sa){ o.travel=haversine(sa,venue)/1000; o.tz=sa[2]-venue[2]; var kick=((new Date(g.ts*1000).getUTCHours()+venue[2])%24+24)%24; o.body=(o.tz<=-2&&kick<=13)?1:0; o.alt=venue[3]>=1500?1:0; } return o; }
+function price(g){ var H=team(g.home), A=team(g.away); if(!H||!A) return null;
+  var ih=injScore(g.injH,g.home), ia=injScore(g.injA,g.away); var S=situation(g); var nch=(H.coach_games||99)<6?1:0, nca=(A.coach_games||99)<6?1:0;
+  var eloD=H.elo-A.elo+(g.neutral?0:M.home_elo); var qh=qbRating(g.qbH), qa=qbRating(g.qbA); var newH=(H.qb&&g.qbH!==H.qb)?1:0, newA=(A.qb&&g.qbA!==A.qb)?1:0;
+  var dome=g.indoor?1:0; var temp=(dome||g.temp==null)?68:g.temp; var wind=(dome||g.wind==null)?0:g.wind;
+  var fh=mean(H.form||[]), fa=mean(A.form||[]); var rh=Math.min(g.restH,14), ra=Math.min(g.restA,14);
+  var xs=[eloD/100,H.off-A.off,A.def-H.def,H.off_pass-A.off_pass,A.def_pass-H.def_pass,H.off_rush-A.off_rush,A.def_rush-H.def_rush,H.succ-A.succ,A.succ_allowed-H.succ_allowed,
+          H.margin-A.margin,fh-fa,qh-qa,newH-newA,(rh-ra)/7,g.restH<=5?1:0,g.restA<=5?1:0,g.div?1:0,g.playoff?1:0,g.neutral?1:0,g.week<=3?1:0,
+          ia[0]-ih[0],ia[1]-ih[1],S.travel,S.tz/3,S.body,S.alt,nca-nch];
+  var xt=[H.off+A.off,H.def+A.def,H.off_pass+A.off_pass,H.succ+A.succ,H.pass_rate+A.pass_rate-1.16,H.pts_for+A.pts_for-44,H.pts_ag+A.pts_ag-44,Math.abs(eloD)/100,Math.abs(qh)+Math.abs(qa),qh+qa,
+          dome,(temp-60)/20,wind/10,(temp-60)/20*wind/10,g.grass?1:0,g.div?1:0,g.playoff?1:0,g.week<=3?1:0,g.week>=16?1:0,M.lg_total-44,ih[0]+ia[0],ih[1]+ia[1],S.travel,S.alt];
+  var pHraw=sigmoid(lin(M.win_model,xs));
+  var T=M.temp||1;                                   // temperature fitted on games the model never trained on
+  var pH=T===1?pHraw:1/(1+Math.exp(-T*Math.log(Math.min(Math.max(pHraw,1e-9),1-1e-9)/(1-Math.min(Math.max(pHraw,1e-9),1-1e-9)))));
+  var mu=lin(M.margin_model,xs), tot=lin(M.total_model,xt);
+  return {H:H,A:A,pBase:pH,muBase:mu,totBase:tot,qh:qh,qa:qa,newH:newH,newA:newA,eloD:eloD,temp:temp,wind:wind,ih:ih,ia:ia,S:S,nch:nch,nca:nca}; }
+
+/* ---------------- odds from ESPN: every bookmaker ---------------- */
+function side(obj,keys){ for(var i=0;i<keys.length;i++){ var o=(obj||{})[keys[i]]; if(o&&typeof o==="object"&&(o.odds!=null||o.line!=null)) return o; } return null; }
+function parseBook(it){ /* returns {book, ml:{home,away}, spread:{home,priceH,priceA} (home line, ESPN sign: -3.5 = home favoured), total:{line,over,under}} */
+  var r={book:((it.provider||{}).name)||"ESPN",ml:null,spread:null,total:null}; var K=["close","current","open"];
+  var mh=side((it.moneyline||{}).home,K), ma=side((it.moneyline||{}).away,K); var hm=amToDec(mh?mh.odds:null), am=amToDec(ma?ma.odds:null);
+  if(!hm||!am){ hm=amToDec((it.homeTeamOdds||{}).moneyLine); am=amToDec((it.awayTeamOdds||{}).moneyLine); } if(hm&&am) r.ml={home:hm,away:am};
+  var sh=side((it.pointSpread||{}).home,K), sa=side((it.pointSpread||{}).away,K); var line=sh?num(sh.line):null; var ph=amToDec(sh?sh.odds:null), pa=amToDec(sa?sa.odds:null);
+  if(line==null&&it.spread!=null){ line=num(it.spread); var fa=(it.awayTeamOdds||{}).favorite===true, fh=(it.homeTeamOdds||{}).favorite===true; if(line!=null&&((fa&&line<0)||(fh&&line>0))) line=-line; } if(line==null&&(it.homeTeamOdds||{}).spread!=null) line=num(it.homeTeamOdds.spread);
+  if(!ph) ph=amToDec((it.homeTeamOdds||{}).spreadOdds); if(!pa) pa=amToDec((it.awayTeamOdds||{}).spreadOdds);
+  if(line!=null) r.spread={home:line,priceH:ph||1.909,priceA:pa||1.909};
+  var ov=side((it.total||{}).over,K), un=side((it.total||{}).under,K); var tl=ov?num(ov.line):null; if(tl==null&&it.overUnder!=null) tl=num(it.overUnder);
+  var oo=amToDec(ov?ov.odds:null)||amToDec(it.overOdds), uo=amToDec(un?un.odds:null)||amToDec(it.underOdds);
+  if(tl!=null) r.total={line:tl,over:oo||1.909,under:uo||1.909};
+  var so=side((it.pointSpread||{}).home,["open"]), to=side((it.total||{}).over,["open"]); r.open={spread:so?num(so.line):null,total:to?num(to.line):null}; return r; }
+async function bookOdds(evId){ var out=[]; try{ var r=await fetch("https://sports.core.api.espn.com/v2/sports/football/leagues/nfl/events/"+evId+"/competitions/"+evId+"/odds?limit=50",{headers:{"Accept":"application/json"}}); var j=await r.json();
+    (j.items||[]).forEach(function(it){ var b=parseBook(it); if(b.ml||b.spread||b.total) out.push(b); }); }catch(e){} return out; }
+function consensus(books){ var c={ml:null,spread:null,total:null}; var ml=books.filter(function(b){return b.ml;}).map(function(b){ var qh=1/b.ml.home,qa=1/b.ml.away; return qh/(qh+qa); }); if(ml.length) c.ml=median(ml);
+  var sp=books.filter(function(b){return b.spread;}).map(function(b){return b.spread.home;}); if(sp.length) c.spread=median(sp);
+  var tl=books.filter(function(b){return b.total;}).map(function(b){return b.total.line;}); if(tl.length) c.total=median(tl); return c; }
+
+/* ---------------- pricing against the market ---------------- */
+function pricedGame(g,P){ var c=consensus(g.books); var out={c:c};
+  out.pHome=(M.stack&&c.ml!=null)?sigmoid(M.stack.a*logitF(P.pBase)+M.stack.b*logitF(c.ml)+M.stack.c):P.pBase;
+  var ms=M.margin_stack; out.mu=(ms&&c.spread!=null)?ms.a*P.muBase+ms.b*(-c.spread)+ms.c:P.muBase; out.sdM=(ms&&c.spread!=null)?ms.sd:M.sd_margin;
+  var ts=M.total_stack; out.tot=(ts&&c.total!=null)?ts.a*P.totBase+ts.b*c.total+ts.c:P.totBase; out.sdT=(ts&&c.total!=null)?ts.sd:M.sd_total;
+  out.ml=null; out.sp=null; out.tt=null;                                                       /* best bet per market across books */
+  g.books.forEach(function(b){
+    if(b.ml){ var qh=1/b.ml.home, qa=1/b.ml.away, mk=qh/(qh+qa); [{s:"H",p:out.pHome,q:qh,d:b.ml.home},{s:"A",p:1-out.pHome,q:qa,d:b.ml.away}].forEach(function(o){ var e=o.p-o.q/(qh+qa); if(!out.ml||e>out.ml.edge) out.ml={side:o.s,edge:e,p:o.p,price:o.d,book:b.book,mk:mk,vig:qh+qa-1}; }); }
+    if(b.spread){ var lineH=b.spread.home; var ph=pAbove(out.mu,out.sdM,-lineH).p; var qH=1/b.spread.priceH, qA=1/b.spread.priceA; [{s:"H",p:ph,q:qH,d:b.spread.priceH,l:lineH},{s:"A",p:1-ph,q:qA,d:b.spread.priceA,l:-lineH}].forEach(function(o){ var e=o.p-o.q/(qH+qA); if(!out.sp||e>out.sp.edge) out.sp={side:o.s,edge:e,p:o.p,price:o.d,line:o.l,book:b.book}; }); }
+    if(b.total){ var po=pAbove(out.tot,out.sdT,b.total.line).p; var qO=1/b.total.over, qU=1/b.total.under; [{s:"O",p:po,q:qO,d:b.total.over},{s:"U",p:1-po,q:qU,d:b.total.under}].forEach(function(o){ var e=o.p-o.q/(qO+qU); if(!out.tt||e>out.tt.edge) out.tt={side:o.s,edge:e,p:o.p,price:o.d,line:b.total.line,book:b.book}; }); }
+  }); return out; }
+function cls(e){ return e>=0.04?"on":(e>=0.02?"some":""); }
+
+/* ---------------- injuries (ESPN) and weather (Open-Meteo, no key) ---------------- */
+var INJ={};
+async function loadInjuries(){ INJ={}; try{ var r=await fetch("https://site.api.espn.com/apis/site/v2/sports/football/nfl/injuries",{headers:{"Accept":"application/json"}}); var j=await r.json();
+    (j.injuries||[]).forEach(function(tm){ var name=tm.displayName||((tm.team||{}).displayName)||""; var abbr=tid((tm.team||{}).abbreviation||""); var t=Object.keys(M.teams).filter(function(k){ return k===abbr||M.teams[k].name===name; })[0]; if(!t) return;
+      INJ[t]=(tm.injuries||[]).map(function(x){ var ath=x.athlete||{}; var st=x.status||((x.type||{}).description)||""; return {name:ath.displayName||ath.shortName||"?",pos:((ath.position||{}).abbreviation)||"",status:st,note:x.shortComment||""}; })
+        .filter(function(x){ return M.status_w[String(x.status).toLowerCase()]; }); }); }catch(e){ INJ._err=String(e&&e.message||e); } return Object.keys(INJ).filter(function(k){ return k!=="_err"; }).length; }
+async function weatherFor(g){ var sh=M.stadiums[g.home]; if(!sh||g.indoor) return null; var d=new Date(g.ts*1000); var day=d.toISOString().slice(0,10); if((g.ts-Date.now()/1000)>15*86400||(g.ts<Date.now()/1000-86400)) return null;
+  try{ var r=await fetch("https://api.open-meteo.com/v1/forecast?latitude="+sh[0]+"&longitude="+sh[1]+"&hourly=temperature_2m,wind_speed_10m,wind_gusts_10m,precipitation_probability&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=UTC&start_date="+day+"&end_date="+day); var j=await r.json(); var H=j.hourly||{}; var i=Math.min(H.time.length-1,d.getUTCHours()+1);
+    return {temp:H.temperature_2m[i],wind:H.wind_speed_10m[i],gust:(H.wind_gusts_10m||[])[i],rain:(H.precipitation_probability||[])[i]}; }catch(e){ return null; } }
+
+/* ---------------- schedule ---------------- */
+var games=[], CUR={season:null,type:2,week:null};
+function say(s,c){ var n=document.createElement("span"); if(c) n.className=c; n.textContent=s+"\n"; $("log").appendChild(n); }
+function sbUrl(){ var v=$("week").value; var u="https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard"; if(!v) return u; if(v.charAt(0)==="P") return u+"?seasontype=3&week="+v.slice(1)+(CUR.season?"&dates="+CUR.season:""); return u+"?seasontype=2&week="+v+(CUR.season?"&dates="+CUR.season:""); }
+async function load(){ $("log").textContent=""; $("cards").innerHTML=""; $("summary").innerHTML=""; games=[]; $("go").disabled=true;
+  try{ var r=await fetch(sbUrl(),{headers:{"Accept":"application/json"}}); var j=await r.json(); CUR.season=(j.season||{}).year||CUR.season; CUR.type=(j.season||{}).type||2; CUR.week=(j.week||{}).number||CUR.week;
+    if(!$("week").value&&CUR.week){ $("week").value=(CUR.type===3?"P":"")+CUR.week; if($("week").selectedIndex<0) $("week").value=""; }
+    var evs=j.events||[]; say("Season "+CUR.season+(CUR.type===3?" playoffs, round ":" week ")+CUR.week+": "+evs.length+" games. Fetching every bookmaker's odds, injury reports and weather ...");
+    var ni=await loadInjuries(); if(!ni) say("Injury report unavailable right now - pricing without it."+(INJ._err?" ("+INJ._err+")":"")); else say("Injury report loaded for "+ni+" teams.");
+    for(var i=0;i<evs.length;i++){ var ev=evs[i]; var comp=(ev.competitions||[])[0]||{}; var cs=comp.competitors||[]; var h=cs.filter(function(c){return c.homeAway==="home";})[0], a=cs.filter(function(c){return c.homeAway==="away";})[0]; if(!h||!a) continue;
+      var ts=Math.floor(Date.parse(ev.date||"")/1000); var ht=tid((h.team||{}).abbreviation), at=tid((a.team||{}).abbreviation); var H=team(ht), A=team(at); var wx=ev.weather||comp.weather||{};
+      var rest=function(T){ if(!T||!T.last_ts) return 7; var d=(ts-T.last_ts)/86400; return d>20?7:d; };
+      var g={id:ev.id,ts:ts,home:ht,away:at,homeName:(h.team||{}).displayName||ht,awayName:(a.team||{}).displayName||at,neutral:!!comp.neutralSite,playoff:CUR.type===3,week:CUR.type===3?19:(CUR.week||1),
+             indoor:!!((comp.venue||{}).indoor),grass:/grass/i.test(((comp.venue||{}).grass===true)?"grass":String((comp.venue||{}).surface||"grass")),temp:wx.temperature!=null?+wx.temperature:null,wind:null,venue:((comp.venue||{}).fullName)||"",
+             div:DIV[ht]&&DIV[ht]===DIV[at],restH:rest(H),restA:rest(A),qbH:H?H.qb:null,qbA:A?A.qb:null,state:(comp.status||{}).type||{},hs:num(h.score),as:num(a.score),books:[]};
+      var saved=get("qb:"+g.id); if(saved){ g.qbH=saved.h||g.qbH; g.qbA=saved.a||g.qbA; }
+      g.injH=INJ[ht]||[]; g.injA=INJ[at]||[]; g.wx=await weatherFor(g); if(g.wx){ if(g.wx.temp!=null) g.temp=g.wx.temp; if(g.wx.wind!=null) g.wind=g.wx.wind; }
+      g.books=await bookOdds(ev.id); if(!g.books.length&&(comp.odds||[]).length){ var b0=parseBook(comp.odds[0]); if(b0.ml||b0.spread||b0.total) g.books.push(b0); }
+      games.push(g); }
+    games.sort(function(x,y){ return x.ts-y.ts; }); var nb=games.reduce(function(s,g){ return s+g.books.length; },0);
+    say("Loaded "+games.length+" games with "+nb+" bookmaker lines.","ok"); render();
+  }catch(e){ say("Failed: "+(e&&e.message?e.message:e)+"\nThe app needs internet access to ESPN. Try again in a moment.","bad"); }
+  $("go").disabled=false; }
+$("go").onclick=load;
+
+/* ---------------- render ---------------- */
+function qbSelect(g,which){ var t=which==="H"?g.home:g.away, cur=which==="H"?g.qbH:g.qbA; var ids=Object.keys(M.qbs).filter(function(q){ return M.qbs[q].team===t; }).sort(function(x,y){ return M.qbs[y].starts-M.qbs[x].starts; });
+  if(cur&&ids.indexOf(cur)<0&&M.qbs[cur]) ids.unshift(cur); var o='<select data-g="'+g.id+'" data-s="'+which+'">'; ids.forEach(function(q){ o+='<option value="'+q+'"'+(q===cur?' selected':'')+'>'+M.qbs[q].name+' ('+sgn(M.qbs[q].rating.toFixed(1))+', '+M.qbs[q].starts+' st)</option>'; });
+  o+='<option value="__backup"'+(cur==="__backup"?' selected':'')+'>Backup / unknown QB (0.0)</option></select>'; return o; }
+function edgeRow(k,o,g,txt){ if(!o) return '<span class="k">'+k+'</span><span><small>no line yet</small></span>'; return '<span class="k">'+k+'</span><span class="'+cls(o.edge)+'">'+txt+' &middot; '+pct(o.p)+' &middot; '+decAm(o.price)+' at '+o.book+' &middot; edge '+pct(o.edge)+'</span>'; }
+function render(){ $("cards").innerHTML=""; var rows=[]; if(!games.length){ $("cards").innerHTML='<div class="card empty">No games this week.</div>'; return; }
+  games.forEach(function(g){ var P=price(g); var el=document.createElement("section"); el.className="g"; var d=new Date(g.ts*1000); var hN=g.home, aN=g.away;
+    var head='<div class="t"><span class="a">'+g.awayName+'</span> @ <span class="h">'+g.homeName+'</span>'+(g.playoff?' <span class="sub">playoff</span>':'')+'</div><div class="meta">'+d.toLocaleDateString([],{weekday:"short",month:"short",day:"numeric"})+' '+d.toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})+' &middot; '+g.venue+(g.neutral?' &middot; neutral':'')+(g.state.completed?' &middot; <b>final '+g.as+'-'+g.hs+'</b>':'')+'</div>';
+    if(!P){ el.innerHTML=head+'<div class="verdict">Team not in model.</div>'; $("cards").appendChild(el); return; }
+    var R=pricedGame(g,P); var fav=R.pHome>=0.5?hN:aN, pf=Math.max(R.pHome,1-R.pHome); var line=R.mu>=0?hN+" -"+Math.abs(R.mu).toFixed(1):aN+" -"+Math.abs(R.mu).toFixed(1);
+    var warns=[]; if((g.qbH==="__backup")||(g.qbA==="__backup")) warns.push("A backup QB is assumed at league-average backup level."); else if(P.newH||P.newA) warns.push("Starting QB differs from the last game the model saw - check injuries and pick the right QB below.");
+    if(!g.books.length) warns.push("No bookmaker lines posted yet; showing the raw model.");
+    if(OLD_MODEL) warns.push("model.json is from the old trainer: injuries, weather, travel and coach factors are ignored until you rerun nfl_trainer.py and build.py.");
+    var outQB=function(list,T){ return (list||[]).filter(function(x){ return x.pos==="QB"&&/out|doubtful|reserve/i.test(x.status); }).map(function(x){ return x.name; }); };
+    var oq=outQB(g.injH).concat(outQB(g.injA)); if(oq.length) warns.push("QB on the injury report: "+oq.join(", ")+" - make sure the QB dropdown shows the actual starter.");
+    if(g.wx&&g.wx.wind>=15) warns.push("Forecast wind "+Math.round(g.wx.wind)+" mph"+(g.wx.gust?" (gusts "+Math.round(g.wx.gust)+")":"")+" - passing and kicking suffer; totals lean under.");
+    if(g.wx&&g.wx.rain>=60) warns.push("Rain likely ("+g.wx.rain+"%)."); if(M.as_of&&(g.ts-Date.parse(M.as_of)/1000)>12*86400) warns.push("Model ratings are "+Math.round((g.ts-Date.parse(M.as_of)/1000)/86400)+" days old - rerun nfl_trainer.py and build.py.");
+    el.innerHTML=head+(warns.length?'<div class="warnbox">'+warns.join(" ")+'</div>':'')
+      +'<div class="qb"><div><small>'+aN+' QB</small>'+qbSelect(g,"A")+'</div><div><small>'+hN+' QB</small>'+qbSelect(g,"H")+'</div></div>'
+      +'<div class="bar"><i style="width:'+(R.pHome*100).toFixed(1)+'%"></i></div><div class="pcts"><span style="color:var(--away)">'+aN+' '+pct(1-R.pHome)+'</span><span style="color:var(--home)">'+hN+' '+pct(R.pHome)+'</span></div>'
+      +'<div class="verdict"><b>'+fav+'</b> to win &middot; '+pct(pf)+' &middot; fair line <b>'+line+'</b> &middot; expected score '+aN+' <b>'+((R.tot-R.mu)/2).toFixed(1)+'</b> '+hN+' <b>'+((R.tot+R.mu)/2).toFixed(1)+'</b> &middot; total <b>'+R.tot.toFixed(1)+'</b></div>'
+      +'<div class="mk">'+edgeRow("Moneyline",R.ml,g,R.ml?(R.ml.side==="H"?hN:aN):"")+edgeRow("Spread",R.sp,g,R.sp?((R.sp.side==="H"?hN:aN)+" "+sgn(R.sp.line)):"")+edgeRow("Total",R.tt,g,R.tt?((R.tt.side==="O"?"Over ":"Under ")+R.tt.line):"")
+      +'<span class="k"></span><span><small>'+g.books.length+' books via ESPN'+(R.c.spread!=null?' &middot; consensus '+hN+' '+sgn(R.c.spread):'')+(R.c.total!=null?', total '+R.c.total:'')+' &middot; probabilities are the model blended with the consensus line; 4%+ is a real edge, under 2% is noise.</small></span></div>'
+      +'<details><summary>Ratings, factors and every book</summary><dl class="f">'
+      +'<dt></dt><dd class="hd">'+aN+'</dd><dd class="hd">'+hN+'</dd>'
+      +'<dt>Elo</dt><dd>'+Math.round(P.A.elo)+'</dd><dd>'+Math.round(P.H.elo)+(g.neutral?'':' (+'+M.home_elo+' home)')+'</dd>'
+      +'<dt>QB rating (pts/game vs avg)</dt><dd>'+sgn(P.qa.toFixed(1))+'</dd><dd>'+sgn(P.qh.toFixed(1))+'</dd>'
+      +'<dt>Off EPA/play (pass / rush)</dt><dd>'+P.A.off.toFixed(3)+' ('+P.A.off_pass.toFixed(2)+' / '+P.A.off_rush.toFixed(2)+')</dd><dd>'+P.H.off.toFixed(3)+' ('+P.H.off_pass.toFixed(2)+' / '+P.H.off_rush.toFixed(2)+')</dd>'
+      +'<dt>Def EPA/play allowed (pass / rush)</dt><dd>'+P.A.def.toFixed(3)+' ('+P.A.def_pass.toFixed(2)+' / '+P.A.def_rush.toFixed(2)+')</dd><dd>'+P.H.def.toFixed(3)+' ('+P.H.def_pass.toFixed(2)+' / '+P.H.def_rush.toFixed(2)+')</dd>'
+      +'<dt>Success rate vs avg (off / def)</dt><dd>'+sgn((P.A.succ*100).toFixed(1))+' / '+sgn((P.A.succ_allowed*100).toFixed(1))+'</dd><dd>'+sgn((P.H.succ*100).toFixed(1))+' / '+sgn((P.H.succ_allowed*100).toFixed(1))+'</dd>'
+      +'<dt>Points for / against (smoothed)</dt><dd>'+P.A.pts_for.toFixed(1)+' / '+P.A.pts_ag.toFixed(1)+'</dd><dd>'+P.H.pts_for.toFixed(1)+' / '+P.H.pts_ag.toFixed(1)+'</dd>'
+      +'<dt>Margin rating &middot; last 5</dt><dd>'+sgn(P.A.margin.toFixed(1))+' &middot; '+(P.A.form||[]).map(sgn).join(" ")+'</dd><dd>'+sgn(P.H.margin.toFixed(1))+' &middot; '+(P.H.form||[]).map(sgn).join(" ")+'</dd>'
+      +'<dt>Rest days</dt><dd>'+g.restA.toFixed(0)+(g.restA<=5?' (short week)':'')+'</dd><dd>'+g.restH.toFixed(0)+(g.restH<=5?' (short week)':'')+'</dd>'
+      +'<dt>Injury load (off / def)</dt><dd>'+P.ia[0].toFixed(1)+' / '+P.ia[1].toFixed(1)+'</dd><dd>'+P.ih[0].toFixed(1)+' / '+P.ih[1].toFixed(1)+'</dd>'
+      +'<dt>Head coach</dt><dd>'+(P.A.coach||'?')+(P.nca?' (new)':'')+'</dd><dd>'+(P.H.coach||'?')+(P.nch?' (new)':'')+'</dd>'
+      +'<dt>Travel</dt><dd style="grid-column:span 2">'+(g.neutral?'neutral site':aN+' travels '+Math.round(P.S.travel*1000)+' km'+(P.S.tz?', '+(P.S.tz<0?'east ':'west ')+Math.abs(P.S.tz)+'h':'')+(P.S.body?' &middot; early body-clock kickoff':'')+(P.S.alt?' &middot; altitude':''))+'</dd>'
+      +'<dt>Weather</dt><dd style="grid-column:span 2">'+(g.indoor?'indoor':(g.wx?Math.round(g.wx.temp)+'\u00b0F, wind '+Math.round(g.wx.wind)+' mph'+(g.wx.rain!=null?', rain '+g.wx.rain+'%':'')+' (forecast at kickoff)':(g.temp!=null?Math.round(g.temp)+'\u00b0F, no wind forecast':'no forecast yet')))+'</dd>'
+      +'<dt>Situation</dt><dd style="grid-column:span 2">'+(g.div?'division game &middot; ':'')+(g.grass?'grass':'turf')+' &middot; week '+g.week+lineMove(g)+'</dd>'
+      +'<dt>Model before market</dt><dd style="grid-column:span 2">'+hN+' '+pct(P.pBase)+' &middot; margin '+sgn(P.muBase.toFixed(1))+' &middot; total '+P.totBase.toFixed(1)+'</dd>'
+      +'</dl>'+injuryList(g)+booksTable(g,R)+'</details>';
+    $("cards").appendChild(el); rows.push({g:g,P:P,R:R});
+    var k="pick:"+g.id; var old=get(k); if(!old||!old.result) put(k,{id:g.id,home:g.home,away:g.away,start:g.ts,season:CUR.season,week:g.week,p_home:R.pHome,mu:R.mu,tot:R.tot,c_spread:R.c.spread,c_total:R.c.total,c_ml:R.c.ml,
+      ml:R.ml?{side:R.ml.side,edge:R.ml.edge,price:R.ml.price}:null,sp:R.sp?{side:R.sp.side,edge:R.sp.edge,line:R.sp.line,price:R.sp.price}:null,tt:R.tt?{side:R.tt.side,edge:R.tt.edge,line:R.tt.line,price:R.tt.price}:null,result:old&&old.result||null,final:old&&old.final||null});
+  });
+  document.querySelectorAll(".qb select").forEach(function(s){ s.onchange=function(){ var g=games.filter(function(x){ return x.id===s.dataset.g; })[0]; if(!g) return; if(s.dataset.s==="H") g.qbH=s.value; else g.qbA=s.value; put("qb:"+g.id,{h:g.qbH,a:g.qbA}); render(); }; });
+  rows.sort(function(a,b){ var ea=Math.max(a.R.ml?a.R.ml.edge:0,a.R.sp?a.R.sp.edge:0,a.R.tt?a.R.tt.edge:0), eb=Math.max(b.R.ml?b.R.ml.edge:0,b.R.sp?b.R.sp.edge:0,b.R.tt?b.R.tt.edge:0); return eb-ea; });
+  var html='<div class="card"><h2>This week at a glance &middot; best edge first</h2><table class="sum"><tr><th>Game</th><th style="text-align:right">Win</th><th style="text-align:right">Spread</th><th style="text-align:right">Total</th></tr>';
+  rows.forEach(function(r){ var R=r.R; var f=function(o,txt){ return o?'<span class="'+(o.edge>=0.04?'ok':'')+'" style="'+(o.edge>=0.04?'color:var(--ok)':'')+'">'+txt+'<br><span style="font-weight:400;color:var(--mute)">'+pct(o.edge)+'</span></span>':'&mdash;'; };
+    html+='<tr><td>'+r.g.away+' @ '+r.g.home+'<br><span style="color:var(--mute);font-size:11.5px">'+new Date(r.g.ts*1000).toLocaleDateString([],{weekday:"short"})+' '+new Date(r.g.ts*1000).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})+'</span></td>'
+      +'<td class="n">'+f(R.ml,R.ml?(R.ml.side==="H"?r.g.home:r.g.away)+' '+pct(R.ml.p):'')+'</td><td class="n">'+f(R.sp,R.sp?(R.sp.side==="H"?r.g.home:r.g.away)+' '+sgn(R.sp.line):'')+'</td><td class="n">'+f(R.tt,R.tt?R.tt.side+' '+R.tt.line:'')+'</td></tr>'; });
+  $("summary").innerHTML=html+'</table></div>'; }
+function lineMove(g){ var o=g.books.filter(function(b){ return b.open&&b.open.spread!=null&&b.spread; }); if(!o.length) return ''; var sp=median(o.map(function(b){ return b.open.spread; })), cur=median(o.map(function(b){ return b.spread.home; }));
+  var ot=g.books.filter(function(b){ return b.open&&b.open.total!=null&&b.total; }); var t0=ot.length?median(ot.map(function(b){ return b.open.total; })):null, t1=ot.length?median(ot.map(function(b){ return b.total.line; })):null;
+  var s=''; if(sp!==cur) s+=' &middot; spread opened '+g.home+' '+sgn(sp)+' now '+sgn(cur); if(t0!=null&&t0!==t1) s+=' &middot; total opened '+t0+' now '+t1; return s; }
+function injuryList(g){ var f=function(list){ return list.length?list.map(function(x){ return '<b>'+x.name+'</b> '+x.pos+' <span style="color:var(--mute)">'+x.status+'</span>'; }).join(', '):'<span style="color:var(--mute)">none listed</span>'; };
+  f=function(list){ return list.length?list.map(function(x){ var s=x.use!=null?Math.round(x.use*100)+'% snaps':''; return '<b>'+x.name+'</b> '+x.pos+' <span style="color:var(--mute)">'+x.status+(s?', '+s:'')+'</span>'; }).join(', '):'<span style="color:var(--mute)">none listed</span>'; };
+  return '<div style="font-size:12px;margin-top:8px"><div style="color:var(--mute);font-size:11px;text-transform:uppercase;margin-bottom:3px">Injury report (weighted by snap share)</div><div><span style="color:var(--away)">'+g.away+'</span>: '+f(g.injA||[])+'</div><div style="margin-top:3px"><span style="color:var(--home)">'+g.home+'</span>: '+f(g.injH||[])+'</div></div>'; }
+function booksTable(g,R){ if(!g.books.length) return ''; var hN=g.home,aN=g.away; var h='<table class="books"><tr><th>Book</th><th>'+aN+' ML</th><th>'+hN+' ML</th><th>Spread ('+hN+')</th><th>Total</th></tr>';
+  g.books.forEach(function(b){ var bm=R.ml&&R.ml.book===b.book, bs=R.sp&&R.sp.book===b.book, bt=R.tt&&R.tt.book===b.book;
+    h+='<tr><td>'+b.book+'</td><td class="'+(bm&&R.ml.side==="A"?'best':'')+'">'+(b.ml?decAm(b.ml.away):'\u2014')+'</td><td class="'+(bm&&R.ml.side==="H"?'best':'')+'">'+(b.ml?decAm(b.ml.home):'\u2014')+'</td>'
+      +'<td class="'+(bs?'best':'')+'">'+(b.spread?sgn(b.spread.home)+' ('+decAm(b.spread.priceH)+'/'+decAm(b.spread.priceA)+')':'\u2014')+'</td><td class="'+(bt?'best':'')+'">'+(b.total?b.total.line+' ('+decAm(b.total.over)+'/'+decAm(b.total.under)+')':'\u2014')+'</td></tr>'; });
+  return h+'</table>'; }
+
+/* ---------------- scorecard ---------------- */
+function allPicks(){ return keys("pick:").map(function(k){ return [k,get(k)]; }).filter(function(x){ return x[1]; }); }
+async function settle(){ var picks=allPicks().filter(function(x){ return !x[1].result&&x[1].start<Date.now()/1000-4*3600; }); var done=0;
+  for(var i=0;i<picks.length;i++){ try{ var r=await fetch("https://site.api.espn.com/apis/site/v2/sports/football/nfl/summary?event="+picks[i][1].id,{headers:{"Accept":"application/json"}}); var j=await r.json(); var comp=((j.header||{}).competitions||[])[0]||{};
+      if(!((comp.status||{}).type||{}).completed) continue; var cs=comp.competitors||[]; var h=cs.filter(function(c){return c.homeAway==="home";})[0], a=cs.filter(function(c){return c.homeAway==="away";})[0]; if(!h||!a) continue;
+      var hs=+h.score, as=+a.score; picks[i][1].final={h:hs,a:as}; picks[i][1].result=hs>as?"H":(hs<as?"A":"T"); put(picks[i][0],picks[i][1]); done++; }catch(e){} }
+  renderScore(); return done; }
+$("settleAll").onclick=async function(){ this.disabled=true; this.textContent="Checking..."; var n=await settle(); this.textContent="Updated "+n+" games"; var b=this; setTimeout(function(){ b.textContent="Update results from ESPN"; b.disabled=false; },1500); };
+function renderScore(){ var picks=allPicks().map(function(x){ return x[1]; }).filter(function(p){ return p.result&&p.final; }); if(!picks.length){ $("score").innerHTML='<div><dt>Nothing settled yet</dt><dd>&mdash;</dd></div>'; return; }
+  var nt=picks.filter(function(p){ return p.result!=="T"; }); var right=nt.filter(function(p){ return (p.p_home>=0.5?"H":"A")===p.result; }).length; var brier=nt.reduce(function(s,p){ return s+Math.pow(p.p_home-(p.result==="H"?1:0),2); },0)/Math.max(nt.length,1);
+  var mae=picks.reduce(function(s,p){ return s+Math.abs(p.mu-(p.final.h-p.final.a)); },0)/picks.length, tae=picks.reduce(function(s,p){ return s+Math.abs(p.tot-(p.final.h+p.final.a)); },0)/picks.length;
+  var ats=picks.filter(function(p){ return p.sp&&(p.final.h-p.final.a)!==(p.sp.side==="H"?-p.sp.line:p.sp.line); }); var atsR=ats.filter(function(p){ var m=p.final.h-p.final.a; return p.sp.side==="H"?(m+p.sp.line>0):(-m+p.sp.line>0); }).length;
+  var ou=picks.filter(function(p){ return p.tt&&(p.final.h+p.final.a)!==p.tt.line; }); var ouR=ou.filter(function(p){ return ((p.final.h+p.final.a)>p.tt.line)===(p.tt.side==="O"); }).length;
+  var mlp=picks.filter(function(p){ return p.ml&&p.result!=="T"; }); var mlR=mlp.filter(function(p){ return p.ml.side===p.result; }).length;
+  var units=function(list,won){ return list.reduce(function(s,p){ return s+(won(p)?(p[list===mlp?"ml":list===ats?"sp":"tt"].price-1):-1); },0); };
+  var strong=function(list){ return list.filter(function(p){ var o=p.ml&&list===mlp?p.ml:(list===ats?p.sp:p.tt); return o&&o.edge>=0.04; }); };
+  var sA=strong(ats), sAr=sA.filter(function(p){ var m=p.final.h-p.final.a; return p.sp.side==="H"?(m+p.sp.line>0):(-m+p.sp.line>0); }).length, sO=strong(ou), sOr=sO.filter(function(p){ return ((p.final.h+p.final.a)>p.tt.line)===(p.tt.side==="O"); }).length, sM=strong(mlp), sMr=sM.filter(function(p){ return p.ml.side===p.result; }).length;
+  $("score").innerHTML='<div><dt>Games settled</dt><dd>'+picks.length+'</dd></div><div><dt>Favourite correct</dt><dd>'+right+' / '+nt.length+' ('+(100*right/Math.max(nt.length,1)).toFixed(1)+'%)</dd></div><div><dt>Brier (0.25 = coin flip)</dt><dd>'+brier.toFixed(3)+'</dd></div>'
+    +'<div><dt>Spread error (avg pts)</dt><dd>'+mae.toFixed(1)+'</dd></div><div><dt>Total error (avg pts)</dt><dd>'+tae.toFixed(1)+'</dd></div>'
+    +(mlp.length?'<div><dt>Moneyline picks won</dt><dd>'+mlR+' / '+mlp.length+' ('+units(mlp,function(p){return p.ml.side===p.result;}).toFixed(1)+'u)</dd></div>':'')
+    +(ats.length?'<div><dt>Against the spread (need 52.4%)</dt><dd>'+atsR+' / '+ats.length+' ('+(100*atsR/ats.length).toFixed(1)+'%)</dd></div>':'')
+    +(ou.length?'<div><dt>Over/under right side</dt><dd>'+ouR+' / '+ou.length+' ('+(100*ouR/ou.length).toFixed(1)+'%)</dd></div>':'')
+    +(sM.length+sA.length+sO.length?'<div><dt>4%+ edges only: ML / ATS / O-U</dt><dd>'+sMr+'/'+sM.length+' &middot; '+sAr+'/'+sA.length+' &middot; '+sOr+'/'+sO.length+'</dd></div>':''); }
+renderScore();
+</script>
+</body>
+</html>
